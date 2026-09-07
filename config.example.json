@@ -1,0 +1,9 @@
+{
+  "tapo_email": "YOUR_TAPO_ACCOUNT_EMAIL",
+  "tapo_password": "YOUR_TAPO_ACCOUNT_PASSWORD",
+  "device_ip": "YOUR_PLUG_LAN_IP",
+
+  "battery_max": 80,
+  "battery_min": 40,
+  "battery_name": "BAT0"
+}

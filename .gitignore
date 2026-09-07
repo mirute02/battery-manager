@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration — holds the Tapo account password. Lives in
+# ~/.config/battery-manager/ by design; never commit a copy from here.
+config.json
+.env
+.env.*
+
+# Local work files
+*.log
+.claude/
+.DS_Store
