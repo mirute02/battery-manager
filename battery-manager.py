@@ -12,6 +12,7 @@ the current level and decides.
 """
 
 import asyncio
+import ipaddress
 import json
 import subprocess
 import sys
@@ -58,6 +59,25 @@ def load_config():
         config[key] = int(number)
     if not 0 < config["battery_min"] < config["battery_max"] <= 100:
         fail("Thresholds must satisfy 0 < battery_min < battery_max <= 100.")
+
+    # The plug speaks an unauthenticated-at-the-network-layer protocol on the
+    # local network. Restricting it to a private address literal means a typo
+    # or a tampered config cannot send the account credentials to a host on the
+    # internet. tvremocon takes the same approach for the same reason.
+    try:
+        address = ipaddress.ip_address(str(config["device_ip"]).strip())
+    except ValueError:
+        fail(
+            f"device_ip must be an IP address literal, not {config['device_ip']!r}. "
+            "A hostname is refused because it could resolve anywhere."
+        )
+    if not (address.is_private or address.is_loopback) or address.is_reserved:
+        fail(
+            f"device_ip {address} is not a private address. This talks to a plug on "
+            "your own network, so a public address is refused rather than sending "
+            "your Tapo credentials off-network."
+        )
+    config["device_ip"] = str(address)
 
     name = config.get("battery_name", "BAT0")
     if not isinstance(name, str) or not name.strip():

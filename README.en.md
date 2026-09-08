@@ -48,6 +48,8 @@ $EDITOR ~/.config/battery-manager/config.json
 | `battery_min` | | `40` | Restore power at or below this % |
 | `battery_name` | | `BAT0` | Directory under `/sys/class/power_supply` |
 
+`device_ip` must be a **private address literal** — a hostname or a public address is refused, so a typo cannot send your Tapo credentials off-network. See [docs/security.md](docs/security.md).
+
 Find your battery with `ls /sys/class/power_supply/`. Some laptops use `BAT1`.
 
 The script refuses to start — without touching the plug — if the config is missing, a value is still `YOUR_…`, a required key is absent, a threshold is not a whole number, `battery_name` is not a non-empty string, or the thresholds are not `0 < battery_min < battery_max <= 100`.
@@ -101,9 +103,24 @@ systemctl --user enable --now battery-manager.timer
 
 **No plug connection when the level is in range.** When the battery sits between `battery_min` and `battery_max`, the script exits without contacting the plug. Most scheduled runs take this path, so a plug that is briefly offline causes no spurious failure.
 
+**It only talks to your own network.** `device_ip` is restricted to a private address literal, and hostnames are refused so DNS is not in the trust path.
+
 **It checks what it is about to switch.** Before sending `on`/`off` it asks the device for its model and refuses anything that is not a P110 / P110M / P115, so a mistyped `device_ip` that lands on a bulb or a different plug does nothing.
 
 **Connections time out.** When an action *is* needed, the `tapo` client gives up after 30 seconds, so a plug that is off the network fails the run cleanly instead of hanging a scheduler.
+
+## Tests
+
+```bash
+pip install pytest
+python -m pytest tests/ -q
+```
+
+34 tests, none of which contact a plug or the network. CI runs them on Python 3.11-3.13.
+
+## Security
+
+[docs/security.md](docs/security.md) sets out what is protected, what is not — the Tapo password is stored in plain text, and that is the main limitation — and what was deliberately left undone.
 
 ## Related
 
@@ -111,6 +128,6 @@ systemctl --user enable --now battery-manager.timer
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Dependency licences are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 `tapo` is MIT-licensed. Tapo is a trademark of TP-Link; this project is not affiliated with or endorsed by TP-Link.

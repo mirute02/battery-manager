@@ -48,6 +48,8 @@ $EDITOR ~/.config/battery-manager/config.json
 | `battery_min` | | `40` | この%以下で給電を再開する |
 | `battery_name` | | `BAT0` | `/sys/class/power_supply` 配下のディレクトリ名 |
 
+`device_ip` は**プライベートアドレスのリテラル**でなければならない。ホスト名や公開アドレスは拒否するので、打ち間違いで Tapo の認証情報が外部へ送られることはない。[docs/security.md](docs/security.md) を参照。
+
 バッテリー名は `ls /sys/class/power_supply/` で確認できる。`BAT1` の機種もある。
 
 設定ファイルが無い、値が `YOUR_…` のまま、必須キーが欠けている、閾値が整数でない、`battery_name` が空でない文字列でない、`0 < battery_min < battery_max <= 100` を満たさない — いずれの場合も**プラグに触れる前に**終了する。
@@ -101,9 +103,24 @@ systemctl --user enable --now battery-manager.timer
 
 **残量が範囲内ならプラグに接続しない。** `battery_min` と `battery_max` の間にあるときは、プラグへ接続せずそのまま終了する。定期実行の大半はこのパスを通るため、プラグが一時的にオフラインでも無用な失敗を出さない。
 
+**自分のネットワークとしか通信しない。** `device_ip` はプライベートアドレスのリテラルに限定し、ホスト名は拒否する。DNS を信頼の経路に入れないため。
+
 **操作する相手を確かめる。** `on`/`off` を送る前に機種を問い合わせ、P110 / P110M / P115 以外なら何もしない。`device_ip` を打ち間違えて電球や別のプラグに当たっても動かさない。
 
 **接続はタイムアウトする。** 操作が必要でプラグに接続する場合、`tapo` クライアントは30秒で諦める。プラグがネットワークから消えていても、スケジューラが固まることはなく、その回がクリーンなエラーで失敗するだけで済む。
+
+## テスト
+
+```bash
+pip install pytest
+python -m pytest tests/ -q
+```
+
+34件。いずれもプラグにもネットワークにも接続しない。CI で Python 3.11〜3.13 上を通している。
+
+## セキュリティ
+
+[docs/security.md](docs/security.md) に、何が守られていて何が守られていないか（Tapo のパスワードは平文保存であり、それが最大の制約）、および意図的にやっていないことを書いてある。
 
 ## 関連プロジェクト
 
@@ -111,6 +128,6 @@ systemctl --user enable --now battery-manager.timer
 
 ## ライセンス
 
-MIT — [LICENSE](LICENSE) を参照。
+MIT — [LICENSE](LICENSE) を参照。依存のライセンスは [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) に記載。
 
 `tapo` は MIT ライセンス。Tapo は TP-Link の商標であり、本プロジェクトは TP-Link と無関係で、承認も受けていない。
